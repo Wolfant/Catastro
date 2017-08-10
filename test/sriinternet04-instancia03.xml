@@ -1,0 +1,1278 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<server xmlns="urn:jboss:domain:1.5">
+
+    <extensions>
+        <extension module="org.jboss.as.clustering.infinispan"/>
+        <extension module="org.jboss.as.cmp"/>
+        <extension module="org.jboss.as.connector"/>
+        <extension module="org.jboss.as.deployment-scanner"/>
+        <extension module="org.jboss.as.ee"/>
+        <extension module="org.jboss.as.ejb3"/>
+        <extension module="org.jboss.as.jacorb"/>
+        <extension module="org.jboss.as.jaxr"/>
+        <extension module="org.jboss.as.jaxrs"/>
+        <extension module="org.jboss.as.jdr"/>
+        <extension module="org.jboss.as.jmx"/>
+        <extension module="org.jboss.as.jpa"/>
+        <extension module="org.jboss.as.jsf"/>
+        <extension module="org.jboss.as.jsr77"/>
+        <extension module="org.jboss.as.logging"/>
+        <extension module="org.jboss.as.mail"/>
+        <extension module="org.jboss.as.messaging"/>
+        <extension module="org.jboss.as.modcluster"/>
+        <extension module="org.jboss.as.naming"/>
+        <extension module="org.jboss.as.pojo"/>
+        <extension module="org.jboss.as.remoting"/>
+        <extension module="org.jboss.as.sar"/>
+        <extension module="org.jboss.as.security"/>
+        <extension module="org.jboss.as.threads"/>
+        <extension module="org.jboss.as.transactions"/>
+        <extension module="org.jboss.as.web"/>
+        <extension module="org.jboss.as.webservices"/>
+        <extension module="org.jboss.as.weld"/>
+        <extension module="org.jboss.snowdrop"/>
+    </extensions>
+
+    <system-properties>
+        <property name="org.apache.coyote.ajp.DEFAULT_CONNECTION_TIMEOUT" value="120000"/>
+        <property name="org.apache.coyote.http11.DEFAULT_CONNECTION_TIMEOUT" value="120000"/>
+        <property name="generico.persona" value="deployment.persona.jar"/>
+        <property name="com.arjuna.ats.arjuna.allowMultipleLastResources" value="true"/>
+        <property name="jboss.server.home.dir" value="${jboss.server.home.dir}"/>
+        <property name="org.apache.el.parser.COERCE_TO_ZERO" value="false"/>
+        <property name="org.apache.jasper.compiler.Parser.STRICT_QUOTE_ESCAPING" value="false"/>
+        <property name="org.apache.coyote.http11.Http11Protocol.COMPRESSION" value="on"/>
+        <property name="org.apache.coyote.http11.Http11Protocol.COMPRESSION_MIME_TYPES" value="text/javascript,text/css,text/html"/>
+        <property name="org.apache.coyote.http11.Http11Protocol.COMPRESSION_MIN_SIZE" value="4096"/>
+    </system-properties>
+
+
+    <management>
+        <security-realms>
+            <security-realm name="ManagementRealm">
+                <authentication>
+                    <local default-user="$local"/>
+                    <properties path="mgmt-users.properties" relative-to="jboss.server.config.dir"/>
+                </authentication>
+                <authorization map-groups-to-roles="false">
+                    <properties path="mgmt-groups.properties" relative-to="jboss.server.config.dir"/>
+                </authorization>
+            </security-realm>
+            <security-realm name="ApplicationRealm">
+                <authentication>
+                    <local default-user="$local" allowed-users="*"/>
+                    <properties path="application-users.properties" relative-to="jboss.server.config.dir"/>
+                </authentication>
+                <authorization>
+                    <properties path="application-roles.properties" relative-to="jboss.server.config.dir"/>
+                </authorization>
+            </security-realm>
+        </security-realms>
+        <audit-log>
+            <formatters>
+                <json-formatter name="json-formatter"/>
+            </formatters>
+            <handlers>
+                <file-handler name="file" formatter="json-formatter" path="audit-log.log" relative-to="jboss.server.data.dir"/>
+            </handlers>
+            <logger log-boot="true" log-read-only="false" enabled="false">
+                <handlers>
+                    <handler name="file"/>
+                </handlers>
+            </logger>
+        </audit-log>
+        <management-interfaces>
+            <native-interface security-realm="ManagementRealm">
+                <socket-binding native="management-native"/>
+            </native-interface>
+            <http-interface security-realm="ManagementRealm">
+                <socket-binding http="management-http"/>
+            </http-interface>
+        </management-interfaces>
+        <access-control provider="simple">
+            <role-mapping>
+                <role name="SuperUser">
+                    <include>
+                        <user name="$local"/>
+                    </include>
+                </role>
+            </role-mapping>
+        </access-control>
+    </management>
+
+    <profile>
+        <subsystem xmlns="urn:jboss:domain:logging:1.3">
+            <console-handler name="CONSOLE">
+                <level name="INFO"/>
+                <formatter>
+                    <pattern-formatter pattern="%K{level}%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/>
+                </formatter>
+            </console-handler>
+            <periodic-rotating-file-handler name="conultaRenta" autoflush="true">
+                <level name="ERROR"/>
+                <file relative-to="jboss.server.log.dir" path="consultaRenta.log"/>
+                <suffix value="yyyy-MM-dd-HH"/>
+                <append value="true"/>
+            </periodic-rotating-file-handler>
+            <periodic-rotating-file-handler name="FILE" autoflush="true">
+                <formatter>
+                    <pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/>
+                </formatter>
+                <file relative-to="jboss.server.log.dir" path="server.log"/>
+                <suffix value=".yyyy-MM-dd"/>
+                <append value="true"/>
+            </periodic-rotating-file-handler>
+            <periodic-rotating-file-handler name="FRIMA_ELECTRONICA" autoflush="false">
+                <level name="DEBUG"/>
+                <file relative-to="jboss.server.log.dir" path="firma.log"/>
+                <suffix value=".yyyy-MM-dd"/>
+                <append value="false"/>
+            </periodic-rotating-file-handler>
+            <periodic-rotating-file-handler name="LOGINModule" autoflush="false">
+                <level name="WARNING"/>
+                <file relative-to="jboss.server.log.dir" path="loginmodule.log"/>
+                <suffix value=".yyyy-MM-dd"/>
+                <append value="false"/>
+            </periodic-rotating-file-handler>
+            <periodic-rotating-file-handler name="SEGURIDAD_INTERNET" autoflush="false">
+                <level name="WARNING"/>
+                <file relative-to="jboss.server.log.dir" path="seguridadJar.log"/>
+                <suffix value=".yyyy-MM-dd"/>
+                <append value="false"/>
+            </periodic-rotating-file-handler>
+            <periodic-rotating-file-handler name="ice-alcohol" autoflush="true">
+                <level name="DEBUG"/>
+                <file relative-to="jboss.server.log.dir" path="ice-alcohol.log"/>
+                <suffix value="yyyy-MM-dd-HH"/>
+                <append value="true"/>
+            </periodic-rotating-file-handler>
+            <periodic-rotating-file-handler name="anexogp" autoflush="false">
+                <level name="INFO"/>
+                <file relative-to="jboss.server.log.dir" path="anexogp.log"/>
+                <suffix value=".yyyy-MM-dd"/>
+                <append value="false"/>
+            </periodic-rotating-file-handler>
+            <periodic-rotating-file-handler name="tmpfile" autoflush="false">
+                <level name="DEBUG"/>
+                <file relative-to="jboss.server.log.dir" path="tmp.log"/>
+                <suffix value=".yyyy-MM-dd"/>
+                <append value="false"/>
+            </periodic-rotating-file-handler>
+            <logger category="ec.gov.sri.renta" use-parent-handlers="false">
+                <level name="ERROR"/>
+                <handlers>
+                    <handler name="conultaRenta"/>
+                </handlers>
+            </logger>
+            <logger category="ec.gov.sri.ice.alcohol" use-parent-handlers="false">
+                <level name="ERROR"/>
+                <handlers>
+                    <handler name="ice-alcohol"/>
+                </handlers>
+            </logger>
+            <logger category="com.arjuna">
+                <level name="WARN"/>
+            </logger>
+            <logger category="org.apache.tomcat.util.modeler">
+                <level name="WARN"/>
+            </logger>
+            <logger category="org.jboss.as.config">
+                <level name="ERROR"/>
+            </logger>
+            <logger category="sun.rmi">
+                <level name="WARN"/>
+            </logger>
+            <logger category="jacorb">
+                <level name="WARN"/>
+            </logger>
+            <logger category="jacorb.config">
+                <level name="ERROR"/>
+            </logger>
+            <logger category="ec.gov.sri.gestion.documentos" use-parent-handlers="false">
+                <level name="ERROR"/>
+                <handlers>
+                    <handler name="FRIMA_ELECTRONICA"/>
+                </handlers>
+            </logger>
+            <logger category="com.arjuna.ats.arjuna" use-parent-handlers="true">
+                <level name="ERROR"/>
+            </logger>
+            <logger category="ec.gov.sri.loginmodule" use-parent-handlers="false">
+                <level name="ERROR"/>
+                <handlers>
+                    <handler name="LOGINModule"/>
+                </handlers>
+            </logger>
+            <logger category="ec.gob.sri.gestion.documentos" use-parent-handlers="false">
+                <level name="ERROR"/>
+                <handlers>
+                    <handler name="FRIMA_ELECTRONICA"/>
+                </handlers>
+            </logger>
+            <logger category="ec.gov.sri.seguridad.internet" use-parent-handlers="false">
+                <level name="ERROR"/>
+                <handlers>
+                    <handler name="SEGURIDAD_INTERNET"/>
+                </handlers>
+            </logger>
+            <logger category="ec.gob.sri.anexogp" use-parent-handlers="false">
+                <level name="INFO"/>
+                <handlers>
+                    <handler name="anexogp"/>
+                </handlers>
+            </logger>
+            <logger category="ec.gov.sri.util" use-parent-handlers="true">
+                <level name="DEBUG"/>
+                <handlers>
+                    <handler name="tmpfile"/>
+                </handlers>
+            </logger>
+            <root-logger>
+                <level name="INFO"/>
+                <handlers>
+                    <handler name="FILE"/>
+                    <handler name="CONSOLE"/>
+                </handlers>
+            </root-logger>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:cmp:1.1"/>
+        <subsystem xmlns="urn:jboss:domain:datasources:1.1">
+            <datasources>
+                <datasource jndi-name="java:/AdmDS" pool-name="AdmDS" enabled="true">
+                    <connection-url>
+                        jdbc:oracle:thin:@(description=(address_list=(load_balance=on)(failover=on)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      	(address=(protocol=tcp)(host=BASEI)(port=1521)))
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     	(connect_data=(service_name=JDBC_INTER1)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             	        (failover_mode=(type=select)(method=basic))))
+                    </connection-url>
+                    <driver-class>oracle.jdbc.OracleDriver</driver-class>
+                    <connection-property name="v$session.program">
+                        AdmDS
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                    <pool>
+                        <min-pool-size>20</min-pool-size>
+                        <max-pool-size>100</max-pool-size>
+                        <prefill>true</prefill>
+                        <flush-strategy>IdleConnections</flush-strategy>
+                        <allow-multiple-users>true</allow-multiple-users>
+                    </pool>
+                    <security>
+                        <user-name>ADM</user-name>
+                        <password>XXXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <statement>
+                        <prepared-statement-cache-size>100</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <datasource jndi-name="java:/RegistroCivilDS" pool-name="RegistroCivilDS" enabled="true">
+                    <connection-url>
+                        jdbc:oracle:thin:@(description=(address_list=(load_balance=on)(failover=on)(address=(protocol=tcp)(host=BASEI)(port=1521)))
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                (connect_data=(service_name=JDBC_INTER1)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                (failover_mode=(type=select)(method=basic))))
+                    </connection-url>
+                    <driver-class>oracle.jdbc.OracleDriver</driver-class>
+                    <connection-property name="v$session.program">
+                        adm
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>10</min-pool-size>
+                        <max-pool-size>100</max-pool-size>
+                        <prefill>true</prefill>
+                        <flush-strategy>IdleConnections</flush-strategy>
+                        <allow-multiple-users>true</allow-multiple-users>
+                    </pool>
+                    <security>
+                        <user-name>OINFO</user-name>
+                        <password>XXXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <statement>
+                        <prepared-statement-cache-size>100</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <datasource jndi-name="java:/NotificacionExternaDS" pool-name="NotificacionExternaDS" enabled="true">
+                    <connection-url>
+                        jdbc:oracle:thin:@(description=(address_list=(load_balance=on)(failover=on)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      	(address=(protocol=tcp)(host=BASEI)(port=1521)))
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     	(connect_data=(service_name=JDBC_INTER1)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             	        (failover_mode=(type=select)(method=basic))))
+                    </connection-url>
+                    <driver-class>oracle.jdbc.OracleDriver</driver-class>
+                    <connection-property name="v$session.program">
+                        gestion-documentos
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>10</min-pool-size>
+                        <max-pool-size>200</max-pool-size>
+                        <prefill>true</prefill>
+                        <flush-strategy>IdleConnections</flush-strategy>
+                        <allow-multiple-users>true</allow-multiple-users>
+                    </pool>
+                    <security>
+                        <user-name>NOTIFICACION</user-name>
+                        <password>XXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <statement>
+                        <prepared-statement-cache-size>100</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <datasource jta="true" jndi-name="java:/jdbc/gestionDocumentos" pool-name="jdbc/gestionDocumentos" enabled="true" use-ccm="true">
+                    <connection-url>
+                        jdbc:oracle:thin:@(description=(address_list=(load_balance=on)(failover=on)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                (address=(protocol=tcp)(host=BASES1)(port=1521))
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                (address=(protocol=tcp)(host=BASES2)(port=1521)))
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                (connect_data=(service_name=JDBC_SRI)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                (server=dedicated)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                (failover_mode=(type=select)(method=basic))
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ))
+                    </connection-url>
+                    <driver-class>oracle.jdbc.OracleDriver</driver-class>
+                    <connection-property name="v$session.program">
+                        GestionDocumentos
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                    <pool>
+                        <min-pool-size>10</min-pool-size>
+                        <max-pool-size>100</max-pool-size>
+                        <prefill>true</prefill>
+                        <flush-strategy>IdleConnections</flush-strategy>
+                        <allow-multiple-users>true</allow-multiple-users>
+                    </pool>
+                    <security>
+                        <user-name>GESTION_DOCUMENTOS</user-name>
+                        <password>XXXXXXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <validate-on-match>false</validate-on-match>
+                        <background-validation>false</background-validation>
+                        <background-validation-millis>1</background-validation-millis>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <statement>
+                        <prepared-statement-cache-size>100</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <datasource jndi-name="java:/ClavesDS" pool-name="ClavesDS" enabled="true" use-java-context="true" spy="true">
+                    <connection-url>
+                        jdbc:oracle:thin:@(description=(address_list=(load_balance=on)(failover=on)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 (address=(protocol=tcp)(host=BASEI)(port=1521)))
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 (connect_data=(service_name=JDBC_INTER1)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 (failover_mode=(type=select)(method=basic))))
+                    </connection-url>
+                    <driver-class>oracle.jdbc.OracleDriver</driver-class>
+                    <connection-property name="v$session.program">
+                        admWeb
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>5</min-pool-size>
+                        <max-pool-size>100</max-pool-size>
+                        <prefill>true</prefill>
+                        <flush-strategy>IdleConnections</flush-strategy>
+                        <allow-multiple-users>true</allow-multiple-users>
+                    </pool>
+                    <security>
+                        <user-name>ADMINWEB</user-name>
+                        <password>XXXXXXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <statement>
+                        <prepared-statement-cache-size>100</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <datasource jndi-name="java:/ClavesPersonaDS" pool-name="ClavesPersonaDS" enabled="true">
+                    <connection-url>
+                        jdbc:oracle:thin:@(description=(address_list=(load_balance=on)(failover=on)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                (address=(protocol=tcp)(host=BASEI)(port=1521)))
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                (connect_data=(service_name=JDBC_INTER1)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                (failover_mode=(type=select)(method=basic))))
+                    </connection-url>
+                    <driver-class>oracle.jdbc.OracleDriver</driver-class>
+                    <connection-property name="v$session.program">
+                        ClavesPersona
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                    <pool>
+                        <min-pool-size>10</min-pool-size>
+                        <max-pool-size>100</max-pool-size>
+                        <prefill>true</prefill>
+                        <flush-strategy>IdleConnections</flush-strategy>
+                        <allow-multiple-users>true</allow-multiple-users>
+                    </pool>
+                    <security>
+                        <user-name>ADMINWEB</user-name>
+                        <password>XXXXXXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <statement>
+                        <prepared-statement-cache-size>100</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <datasource jta="true" jndi-name="java:/GestionDocumentosDS" pool-name="GestionDocumentosDS" enabled="true" use-ccm="true">
+                    <connection-url>
+                        jdbc:oracle:thin:@(description=(address_list=(load_balance=on)(failover=on)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     (address=(protocol=tcp)(host=BASEI)(port=1521)))
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     (connect_data=(service_name=JDBC_INTER1)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     (failover_mode=(type=select)(method=basic))))
+                    </connection-url>
+                    <driver-class>oracle.jdbc.OracleDriver</driver-class>
+                    <connection-property name="v$session.program">
+                        GestionDocumentos
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                    <pool>
+                        <min-pool-size>10</min-pool-size>
+                        <max-pool-size>100</max-pool-size>
+                        <prefill>true</prefill>
+                        <flush-strategy>IdleConnections</flush-strategy>
+                        <allow-multiple-users>true</allow-multiple-users>
+                    </pool>
+                    <security>
+                        <user-name>GESTION_DOCUMENTOS</user-name>
+                        <password>XXXXXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <validate-on-match>false</validate-on-match>
+                        <background-validation>false</background-validation>
+                        <background-validation-millis>1</background-validation-millis>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <statement>
+                        <prepared-statement-cache-size>100</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <datasource jndi-name="java:/PersonaDS" pool-name="PersonaDS" enabled="true">
+                    <connection-url>
+                        jdbc:oracle:thin:@(description=(address_list=(load_balance=on)(failover=on)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              (address=(protocol=tcp)(host=BASEI)(port=1521)))
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 (connect_data=(service_name=JDBC_INTER1)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 (failover_mode=(type=select)(method=basic))))
+                    </connection-url>
+                    <driver-class>oracle.jdbc.OracleDriver</driver-class>
+                    <connection-property name="v$session.program">
+                        Persona
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>20</min-pool-size>
+                        <max-pool-size>100</max-pool-size>
+                        <prefill>true</prefill>
+                        <flush-strategy>IdleConnections</flush-strategy>
+                        <allow-multiple-users>true</allow-multiple-users>
+                    </pool>
+                    <security>
+                        <user-name>PERSONA</user-name>
+                        <password>XXXXXXXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <statement>
+                        <prepared-statement-cache-size>200</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <datasource jndi-name="java:/RucDS" pool-name="RucDS" enabled="true">
+                    <connection-url>
+                        jdbc:oracle:thin:@(description=(address_list=(load_balance=on)(failover=on)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           (address=(protocol=tcp)(host=BASEI)(port=1521)))
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           (connect_data=(service_name=JDBC_INTER1)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           (failover_mode=(type=select)(method=basic))))
+                    </connection-url>
+                    <driver-class>oracle.jdbc.OracleDriver</driver-class>
+                    <connection-property name="v$session.program">
+                        RucDS
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+                    <pool>
+                        <min-pool-size>20</min-pool-size>
+                        <max-pool-size>300</max-pool-size>
+                        <prefill>true</prefill>
+                        <flush-strategy>IdleConnections</flush-strategy>
+                        <allow-multiple-users>true</allow-multiple-users>
+                    </pool>
+                    <security>
+                        <user-name>RUCSRI</user-name>
+                        <password>XXXXXXXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <statement>
+                        <prepared-statement-cache-size>100</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <datasource jndi-name="java:/AdmWebDS" pool-name="AdmWebDS" enabled="true">
+                    <connection-url>
+                        jdbc:oracle:thin:@(description=(address_list=(load_balance=on)(failover=on)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            (address=(protocol=tcp)(host=BASEI)(port=1521)))
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            (connect_data=(service_name=JDBC_INTER1)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            (failover_mode=(type=select)(method=basic))))
+                    </connection-url>
+                    <connection-property name="oracle.jdbc.enableTempLobRefCnt">
+                        true
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>10</min-pool-size>
+                        <max-pool-size>100</max-pool-size>
+                        <prefill>true</prefill>
+                    </pool>
+                    <security>
+                        <user-name>ADMINWEB</user-name>
+                        <password>XXXXXXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <statement>
+                        <prepared-statement-cache-size>100</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <datasource jndi-name="java:/IceAlcoholDS" pool-name="IceAlcoholDS" enabled="true">
+                    <connection-url>
+                        jdbc:oracle:thin:@(description=(address_list=(load_balance=on)(failover=on)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                			(address=(protocol=tcp)(host=BASEI)(port=1521)))
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                			(connect_data=(service_name=JDBC_INTER1)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                			(failover_mode=(type=select)(method=basic))))
+                    </connection-url>
+                    <connection-property name="oracle.jdbc.enableTempLobRefCnt">
+                        true
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>10</min-pool-size>
+                        <max-pool-size>100</max-pool-size>
+                        <prefill>true</prefill>
+                        <flush-strategy>IdleConnections</flush-strategy>
+                        <allow-multiple-users>true</allow-multiple-users>
+                    </pool>
+                    <security>
+                        <user-name>ICE_ALCOHOL</user-name>
+                        <password>XXXXXXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <timeout>
+                        <idle-timeout-minutes>10</idle-timeout-minutes>
+                    </timeout>
+                    <statement>
+                        <prepared-statement-cache-size>100</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <datasource jndi-name="java:/RigDS" pool-name="RigDS" enabled="true">
+                    <connection-url>
+                        jdbc:oracle:thin:@(description=(address_list=(load_balance=on)(failover=on)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                			(address=(protocol=tcp)(host=BASEI)(port=1521)))
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                			(connect_data=(service_name=JDBC_INTER1)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                			(failover_mode=(type=select)(method=basic))))
+                    </connection-url>
+                    <driver-class>oracle.jdbc.OracleDriver</driver-class>
+                    <connection-property name="v$session.program">
+                        rig
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>10</min-pool-size>
+                        <max-pool-size>300</max-pool-size>
+                        <prefill>true</prefill>
+                        <flush-strategy>IdleConnections</flush-strategy>
+                        <allow-multiple-users>true</allow-multiple-users>
+                    </pool>
+                    <security>
+                        <user-name>RIG</user-name>
+                        <password>XXXXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <statement>
+                        <prepared-statement-cache-size>100</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <datasource jndi-name="java:/ComprobantesElectronicosDS" pool-name="ComprobantesElectronicosDS" enabled="true">
+                    <connection-url>jdbc:oracle:thin:@cel12c-scan:1521/from_inter</connection-url>
+                    <driver-class>oracle.jdbc.OracleDriver</driver-class>
+                    <connection-property name="v$session.program">
+                        cel
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>10</min-pool-size>
+                        <max-pool-size>100</max-pool-size>
+                        <prefill>true</prefill>
+                        <flush-strategy>IdleConnections</flush-strategy>
+                        <allow-multiple-users>true</allow-multiple-users>
+                    </pool>
+                    <security>
+                        <user-name>COMPROBANTES_ELECTRONICOS</user-name>
+                        <password>XXXXXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <statement>
+                        <prepared-statement-cache-size>100</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <datasource jndi-name="java:/ComprobantesElectronicosHistoricoDS" pool-name="ComprobantesElectronicosHistoricoDS" enabled="true">
+                    <connection-url>jdbc:oracle:thin:@10.2.3.110:1521/celpas</connection-url>
+                    <driver-class>oracle.jdbc.OracleDriver</driver-class>
+                    <connection-property name="v$session.program">
+                        cel
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>10</min-pool-size>
+                        <max-pool-size>100</max-pool-size>
+                        <prefill>true</prefill>
+                        <flush-strategy>IdleConnections</flush-strategy>
+                        <allow-multiple-users>true</allow-multiple-users>
+                    </pool>
+                    <security>
+                        <user-name>COMPROBANTES_ELECTRONICOS</user-name>
+                        <password>XXXXXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <statement>
+                        <prepared-statement-cache-size>100</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <datasource jndi-name="java:/genMensajesDS" pool-name="genMensajesDS" enabled="true">
+                    <connection-url>jdbc:oracle:thin:@cel12c-scan:1521/jdbc_cel1</connection-url>
+                    <driver-class>oracle.jdbc.OracleDriver</driver-class>
+                    <connection-property name="v$session.program">
+                        mensajes
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>10</min-pool-size>
+                        <max-pool-size>100</max-pool-size>
+                        <prefill>true</prefill>
+                        <flush-strategy>IdleConnections</flush-strategy>
+                        <allow-multiple-users>true</allow-multiple-users>
+                    </pool>
+                    <security>
+                        <user-name>MENSAJES</user-name>
+                        <password>XXXXXXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <statement>
+                        <prepared-statement-cache-size>100</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <datasource jndi-name="java:/VectorFiscalDS" pool-name="VectorFiscalDS" enabled="true">
+                    <connection-url>jdbc:oracle:thin:@cel12c-scan:1521/jdbc_cel1</connection-url>
+                    <driver-class>oracle.jdbc.OracleDriver</driver-class>
+                    <connection-property name="v$session.program">
+                        vectorFiscal
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>10</min-pool-size>
+                        <max-pool-size>100</max-pool-size>
+                        <prefill>true</prefill>
+                        <flush-strategy>IdleConnections</flush-strategy>
+                        <allow-multiple-users>true</allow-multiple-users>
+                    </pool>
+                    <security>
+                        <user-name>VEC_FISCAL</user-name>
+                        <password>XXXXXXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <statement>
+                        <prepared-statement-cache-size>100</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <datasource jndi-name="java:/RecDeclaracionesDS" pool-name="RecDeclaracionesDS" enabled="true">
+                    <connection-url>
+                        jdbc:oracle:thin:@(description=(address_list=(load_balance=on)(failover=on)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              (address=(protocol=tcp)(host=BASEI)(port=1521)))
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              (connect_data=(service_name=JDBC_INTER1)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              (failover_mode=(type=select)(method=basic))))
+                    </connection-url>
+                    <driver-class>oracle.jdbc.OracleDriver</driver-class>
+                    <connection-property name="v$session.program">
+                        RecDeclaracionesInternetDS
+                    </connection-property>
+                    <driver>oracle</driver>
+                    <pool>
+                        <min-pool-size>10</min-pool-size>
+                        <max-pool-size>200</max-pool-size>
+                        <prefill>true</prefill>
+                        <flush-strategy>IdleConnections</flush-strategy>
+                        <allow-multiple-users>true</allow-multiple-users>
+                    </pool>
+                    <security>
+                        <user-name>DIT_USUARIO</user-name>
+                        <password>XXXXXXXX</password>
+                    </security>
+                    <validation>
+                        <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+                        <background-validation>true</background-validation>
+                        <background-validation-millis>15000</background-validation-millis>
+                        <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+                        <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+                    </validation>
+                    <timeout>
+                        <idle-timeout-minutes>10</idle-timeout-minutes>
+                    </timeout>
+                    <statement>
+                        <prepared-statement-cache-size>200</prepared-statement-cache-size>
+                        <share-prepared-statements>true</share-prepared-statements>
+                    </statement>
+                </datasource>
+                <drivers>
+                    <driver name="oracle" module="oracle.jdbc">
+                        <xa-datasource-class>oracle.jdbc.OracleDriver</xa-datasource-class>
+                    </driver>
+                </drivers>
+            </datasources>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:deployment-scanner:1.1">
+            <deployment-scanner path="deployments" relative-to="jboss.server.base.dir" scan-interval="0" auto-deploy-zipped="false" auto-deploy-exploded="false" auto-deploy-xml="false"/>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:ee:1.1">
+            <global-modules>
+                <module name="org.apache.log4j" slot="main"/>
+                <module name="org.apache.commons.beanutils" slot="main"/>
+                <module name="org.dom4j" slot="main"/>
+                <module name="org.apache.axis" slot="main"/>
+            </global-modules>
+            <spec-descriptor-property-replacement>false</spec-descriptor-property-replacement>
+            <jboss-descriptor-property-replacement>true</jboss-descriptor-property-replacement>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:ejb3:1.4">
+            <session-bean>
+                <stateless>
+                    <bean-instance-pool-ref pool-name="slsb-strict-max-pool"/>
+                </stateless>
+                <stateful default-access-timeout="5000" cache-ref="simple"/>
+                <singleton default-access-timeout="5000"/>
+            </session-bean>
+            <mdb>
+                <resource-adapter-ref resource-adapter-name="${ejb.resource-adapter-name:hornetq-ra}"/>
+                <bean-instance-pool-ref pool-name="mdb-strict-max-pool"/>
+            </mdb>
+            <entity-bean>
+                <optimistic-locking enabled="true"/>
+            </entity-bean>
+            <pools>
+                <bean-instance-pools>
+                    <strict-max-pool name="slsb-strict-max-pool" max-pool-size="400" instance-acquisition-timeout="5" instance-acquisition-timeout-unit="MINUTES"/>
+                    <strict-max-pool name="mdb-strict-max-pool" max-pool-size="400" instance-acquisition-timeout="5" instance-acquisition-timeout-unit="MINUTES"/>
+                </bean-instance-pools>
+            </pools>
+            <caches>
+                <cache name="simple" aliases="NoPassivationCache"/>
+                <cache name="passivating" passivation-store-ref="file" aliases="SimpleStatefulCache"/>
+            </caches>
+            <passivation-stores>
+                <file-passivation-store name="file"/>
+            </passivation-stores>
+            <async thread-pool-name="default"/>
+            <timer-service thread-pool-name="default">
+                <data-store path="timer-service-data" relative-to="jboss.server.data.dir"/>
+            </timer-service>
+            <remote connector-ref="remoting-connector" thread-pool-name="default"/>
+            <thread-pools>
+                <thread-pool name="default">
+                    <max-threads count="10"/>
+                    <keepalive-time time="100" unit="milliseconds"/>
+                </thread-pool>
+            </thread-pools>
+            <iiop enable-by-default="false" use-qualified-name="false"/>
+            <default-security-domain value="other"/>
+            <default-missing-method-permissions-deny-access value="false"/>
+            <statistics enabled="true"/>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:infinispan:1.4">
+            <cache-container name="web" aliases="standard-session-cache" default-cache="local-web" module="org.jboss.as.clustering.web.infinispan">
+                <local-cache name="local-web" batching="true">
+                    <file-store passivation="false" purge="false"/>
+                </local-cache>
+            </cache-container>
+            <cache-container name="hibernate" default-cache="local-query" module="org.jboss.as.jpa.hibernate:4">
+                <local-cache name="entity">
+                    <transaction mode="NON_XA"/>
+                    <eviction strategy="LRU" max-entries="10000"/>
+                    <expiration max-idle="100000"/>
+                </local-cache>
+                <local-cache name="local-query">
+                    <transaction mode="NONE"/>
+                    <eviction strategy="LRU" max-entries="10000"/>
+                    <expiration max-idle="100000"/>
+                </local-cache>
+                <local-cache name="timestamps">
+                    <transaction mode="NONE"/>
+                    <eviction strategy="NONE"/>
+                </local-cache>
+            </cache-container>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:jacorb:1.3">
+            <orb socket-binding="jacorb" ssl-socket-binding="jacorb-ssl">
+                <initializers security="identity" transactions="spec"/>
+            </orb>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:jaxr:1.1">
+            <connection-factory jndi-name="java:jboss/jaxr/ConnectionFactory"/>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:jaxrs:1.0"/>
+        <subsystem xmlns="urn:jboss:domain:jca:1.1">
+            <archive-validation enabled="true" fail-on-error="true" fail-on-warn="false"/>
+            <bean-validation enabled="true"/>
+            <default-workmanager>
+                <short-running-threads>
+                    <core-threads count="50"/>
+                    <queue-length count="50"/>
+                    <max-threads count="50"/>
+                    <keepalive-time time="10" unit="seconds"/>
+                </short-running-threads>
+                <long-running-threads>
+                    <core-threads count="50"/>
+                    <queue-length count="50"/>
+                    <max-threads count="50"/>
+                    <keepalive-time time="10" unit="seconds"/>
+                </long-running-threads>
+            </default-workmanager>
+            <cached-connection-manager/>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:jmx:1.3">
+            <expose-resolved-model/>
+            <expose-expression-model/>
+            <remoting-connector/>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:jpa:1.1">
+            <jpa default-datasource="" default-extended-persistence-inheritance="DEEP"/>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:jsf:1.0"/>
+        <subsystem xmlns="urn:jboss:domain:jsr77:1.0"/>
+        <subsystem xmlns="urn:jboss:domain:mail:1.1">
+            <mail-session jndi-name="java:jboss/mail/Default">
+                <smtp-server outbound-socket-binding-ref="mail-smtp"/>
+            </mail-session>
+            <mail-session jndi-name="java:/DevIvaExtranjerosMail">
+                <smtp-server outbound-socket-binding-ref="mail-smtp">
+                    <login name="nobody" password="password"/>
+                </smtp-server>
+            </mail-session>
+            <mail-session jndi-name="java:jboss/mail/mailSeguridaClavesPersona">
+                <smtp-server outbound-socket-binding-ref="mail-smtp"/>
+            </mail-session>
+            <mail-session jndi-name="java:/mailConciliacion">
+                <smtp-server outbound-socket-binding-ref="mail-smtp"/>
+            </mail-session>
+            <mail-session jndi-name="java:/mail/sri/MailSession">
+                <smtp-server outbound-socket-binding-ref="mail-smtp"/>
+            </mail-session>
+            <mail-session jndi-name="java:/mailTuPortal" from="infoTuPortal@sri.ad">
+                <smtp-server outbound-socket-binding-ref="mail-smtp">
+                    <login name="nobody" password="password"/>
+                </smtp-server>
+            </mail-session>
+            <mail-session jndi-name="java:/DeclaracionesMail">
+                <smtp-server outbound-socket-binding-ref="mail-smtp"/>
+            </mail-session>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:messaging:1.4">
+            <hornetq-server>
+                <persistence-enabled>true</persistence-enabled>
+                <security-enabled>false</security-enabled>
+                <journal-type>NIO</journal-type>
+                <journal-min-files>2</journal-min-files>
+
+                <connectors>
+                    <netty-connector name="netty" socket-binding="messaging"/>
+                    <netty-connector name="netty-throughput" socket-binding="messaging-throughput">
+                        <param key="batch-delay" value="50"/>
+                    </netty-connector>
+                    <in-vm-connector name="in-vm" server-id="0"/>
+                </connectors>
+
+                <acceptors>
+                    <netty-acceptor name="netty" socket-binding="messaging"/>
+                    <netty-acceptor name="netty-throughput" socket-binding="messaging-throughput">
+                        <param key="batch-delay" value="50"/>
+                        <param key="direct-deliver" value="false"/>
+                    </netty-acceptor>
+                    <in-vm-acceptor name="in-vm" server-id="0"/>
+                </acceptors>
+
+                <security-settings>
+                    <security-setting match="#">
+                        <permission type="send" roles="guest"/>
+                        <permission type="consume" roles="guest"/>
+                        <permission type="createNonDurableQueue" roles="guest"/>
+                        <permission type="deleteNonDurableQueue" roles="guest"/>
+                    </security-setting>
+                </security-settings>
+
+                <address-settings>
+                    <address-setting match="#">
+                        <dead-letter-address>jms.queue.DLQ</dead-letter-address>
+                        <expiry-address>jms.queue.ExpiryQueue</expiry-address>
+                        <redelivery-delay>0</redelivery-delay>
+                        <max-size-bytes>10485760</max-size-bytes>
+                        <page-size-bytes>2097152</page-size-bytes>
+                        <address-full-policy>PAGE</address-full-policy>
+                        <message-counter-history-day-limit>10</message-counter-history-day-limit>
+                        <redistribution-delay>1000</redistribution-delay>
+                    </address-setting>
+                </address-settings>
+
+                <jms-connection-factories>
+                    <connection-factory name="InVmConnectionFactory">
+                        <connectors>
+                            <connector-ref connector-name="in-vm"/>
+                        </connectors>
+                        <entries>
+                            <entry name="java:/ConnectionFactory"/>
+                        </entries>
+                    </connection-factory>
+                    <connection-factory name="RemoteConnectionFactory">
+                        <connectors>
+                            <connector-ref connector-name="netty"/>
+                        </connectors>
+                        <entries>
+                            <entry name="java:jboss/exported/jms/RemoteConnectionFactory"/>
+                        </entries>
+                    </connection-factory>
+                    <pooled-connection-factory name="hornetq-ra">
+                        <transaction mode="xa"/>
+                        <connectors>
+                            <connector-ref connector-name="in-vm"/>
+                        </connectors>
+                        <entries>
+                            <entry name="java:/JmsXA"/>
+                        </entries>
+                    </pooled-connection-factory>
+                </jms-connection-factories>
+
+                <jms-destinations>
+                    <jms-queue name="ComprobantesRecibidos">
+                        <entry name="queue/ComprobantesRecibidos"/>
+                        <durable>false</durable>
+                    </jms-queue>
+                    <jms-queue name="SolicitudesEmision">
+                        <entry name="queue/SolicitudesEmision"/>
+                        <durable>false</durable>
+                    </jms-queue>
+                    <jms-queue name="ComprobantesRecibidosLoteMasivo">
+                        <entry name="queue/ComprobantesRecibidosLoteMasivo"/>
+                        <durable>false</durable>
+                    </jms-queue>
+                    <jms-queue name="LoteMasivoRecibido">
+                        <entry name="queue/LotesMasivosRecibidos"/>
+                        <durable>false</durable>
+                    </jms-queue>
+                    <jms-queue name="ComprobantesRecibidosOffline">
+                        <entry name="queue/ComprobantesRecibidosOffline"/>
+                        <durable>false</durable>
+                    </jms-queue>
+                    <jms-queue name="ArchivosComprobatesLoteMasivoRecibido">
+                        <entry name="queue/ArchivosComprobatesLoteMasivoRecibido"/>
+                        <durable>false</durable>
+                    </jms-queue>
+                    <jms-queue name="secuencial">
+                        <entry name="queue/adm/secuencial"/>
+                        <durable>false</durable>
+                    </jms-queue>
+                    <jms-queue name="queue/adm/secuencial">
+                        <entry name="queue/adm/secuencial"/>
+                    </jms-queue>
+                    <jms-queue name="queueMailSeguridadClavesPersona">
+                        <entry name="queue/queueMailSeguridadClavesPersona"/>
+                        <durable>false</durable>
+                    </jms-queue>
+                    <jms-queue name="sriMail">
+                        <entry name="queue/sri/mail"/>
+                        <durable>false</durable>
+                    </jms-queue>
+                    <jms-queue name="mailSession">
+                        <entry name="mail/sri/MailSession"/>
+                        <durable>false</durable>
+                    </jms-queue>
+                </jms-destinations>
+            </hornetq-server>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:modcluster:1.1">
+            <mod-cluster-config advertise-socket="modcluster" proxy-list="10.1.2.18:1234,10.1.2.19:1234,10.1.2.42:1234,10.1.2.61:1234,10.1.2.64:1234,10.1.2.129:1234" balancer="mycluster" advertise="false" load-balancing-group="AGPgroup" connector="ajp">
+                <dynamic-load-provider>
+                    <load-metric type="busyness"/>
+                </dynamic-load-provider>
+            </mod-cluster-config>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:naming:1.4">
+            <remote-naming/>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:pojo:1.0"/>
+        <subsystem xmlns="urn:jboss:domain:remoting:1.1">
+            <connector name="remoting-connector" socket-binding="remoting" security-realm="ApplicationRealm"/>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:resource-adapters:1.1"/>
+        <subsystem xmlns="urn:jboss:domain:sar:1.0"/>
+        <subsystem xmlns="urn:jboss:domain:security:1.2">
+            <security-domains>
+                <security-domain name="other" cache-type="default">
+                    <authentication>
+                        <login-module code="Remoting" flag="optional">
+                            <module-option name="password-stacking" value="useFirstPass"/>
+                        </login-module>
+                        <login-module code="RealmDirect" flag="required">
+                            <module-option name="password-stacking" value="useFirstPass"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="jboss-web-policy" cache-type="default">
+                    <authorization>
+                        <policy-module code="Delegating" flag="required"/>
+                    </authorization>
+                </security-domain>
+                <security-domain name="jboss-ejb-policy" cache-type="default">
+                    <authorization>
+                        <policy-module code="Delegating" flag="required"/>
+                    </authorization>
+                </security-domain>
+                <security-domain name="security-login-module-sso" cache-type="default">
+                    <authentication>
+                        <login-module code="ec.gov.sri.loginmodule.impl.LoginModuleSSO" flag="required">
+                            <module-option name="dsJndiName" value="java:/AdmWebDS"/>
+                            <module-option name="hashAlgorithm" value="MD5"/>
+                            <module-option name="hashEncoding" value="hex"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="SeguridadInternetApplicationSecurity" cache-type="default">
+                    <authentication>
+                        <login-module code="ec.gov.sri.seguridad.jaas.InternetLoginModule" flag="required">
+                            <module-option name="dsJndiName" value="java:/AdmWebDS"/>
+                            <module-option name="hashAlgorithm" value="MD5"/>
+                            <module-option name="hashEncoding" value="hex"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="DevIvaExtranjerosDatabaseSecurity" cache-type="default">
+                    <authentication>
+                        <login-module code="org.picketbox.datasource.security.CallerIdentityLoginModule" flag="required">
+                            <module-option name="userName" value="DEVOLUCION_IVA_EXTRANJEROS"/>
+                            <module-option name="password" value="XXXXXXX"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="DevIvaExtranjerosApplicationSecurity" cache-type="default">
+                    <authentication>
+                        <login-module code="ec.gov.sri.seguridad.OracleLoginModule" flag="required">
+                            <module-option name="dataSource" value="java:/DevIvaExtranjerosDS"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+                <security-domain name="RecaudacionDatabaseSecurity" cache-type="default">
+                    <authentication>
+                        <login-module code="org.picketbox.datasource.security.CallerIdentityLoginModule" flag="required">
+                            <module-option name="userName" value="RECAUDACION"/>
+                            <module-option name="password" value="XXXXXX"/>
+                        </login-module>
+                    </authentication>
+                </security-domain>
+            </security-domains>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:threads:1.1"/>
+        <subsystem xmlns="urn:jboss:domain:transactions:1.4">
+            <core-environment>
+                <process-id>
+                    <uuid/>
+                </process-id>
+            </core-environment>
+            <recovery-environment socket-binding="txn-recovery-environment" status-socket-binding="txn-status-manager"/>
+            <coordinator-environment default-timeout="600"/>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:web:1.5" default-virtual-server="default-host" instance-id="${jboss.sri.name}" native="false">
+            <connector name="http" protocol="HTTP/1.1" scheme="http" socket-binding="http"/>
+            <connector name="ajp" protocol="AJP/1.3" scheme="http" socket-binding="ajp" max-connections="2400"/>
+            <virtual-server name="default-host" enable-welcome-root="true">
+                <alias name="localhost"/>
+            </virtual-server>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:webservices:1.2">
+            <modify-wsdl-address>true</modify-wsdl-address>
+            <wsdl-host>jbossws.undefined.host</wsdl-host>
+            <endpoint-config name="Standard-Endpoint-Config"/>
+            <endpoint-config name="Recording-Endpoint-Config">
+                <pre-handler-chain name="recording-handlers" protocol-bindings="##SOAP11_HTTP ##SOAP11_HTTP_MTOM ##SOAP12_HTTP ##SOAP12_HTTP_MTOM">
+                    <handler name="RecordingHandler" class="org.jboss.ws.common.invocation.RecordingServerHandler"/>
+                </pre-handler-chain>
+            </endpoint-config>
+            <client-config name="Standard-Client-Config"/>
+        </subsystem>
+        <subsystem xmlns="urn:jboss:domain:weld:1.0"/>
+        <subsystem xmlns="urn:jboss:domain:snowdrop:1.0"/>
+    </profile>
+
+    <interfaces>
+        <interface name="management">
+            <inet-address value="${jboss.bind.address.management:10.1.2.46}"/>
+        </interface>
+        <interface name="public">
+            <inet-address value="${jboss.bind.address:10.1.2.46}"/>
+        </interface>
+        <interface name="unsecure">
+            <inet-address value="${jboss.bind.address.unsecure:10.1.2.46}"/>
+        </interface>
+    </interfaces>
+
+    <socket-binding-group name="standard-sockets" default-interface="public" port-offset="${jboss.socket.binding.port-offset:0}">
+        <socket-binding name="management-native" interface="management" port="${jboss.management.native.port:9999}"/>
+        <socket-binding name="management-http" interface="management" port="${jboss.management.http.port:9990}"/>
+        <socket-binding name="management-https" interface="management" port="${jboss.management.https.port:9443}"/>
+        <socket-binding name="ajp" port="8009"/>
+        <socket-binding name="http" port="8080"/>
+        <socket-binding name="https" port="8443"/>
+        <socket-binding name="jacorb" interface="unsecure" port="3528"/>
+        <socket-binding name="jacorb-ssl" interface="unsecure" port="3529"/>
+        <socket-binding name="messaging" port="5445"/>
+        <socket-binding name="messaging-group" port="0" multicast-address="${jboss.messaging.group.address:231.7.7.23}" multicast-port="${jboss.messaging.group.port:9876}"/>
+        <socket-binding name="messaging-throughput" port="5455"/>
+        <socket-binding name="modcluster" port="0" multicast-address="224.0.1.23" multicast-port="23364"/>
+        <socket-binding name="remoting" port="4447"/>
+        <socket-binding name="txn-recovery-environment" port="4712"/>
+        <socket-binding name="txn-status-manager" port="4713"/>
+        <outbound-socket-binding name="mail-smtp">
+            <remote-destination host="10.1.0.27" port="25"/>
+        </outbound-socket-binding>
+    </socket-binding-group>
+
+    <deployments>
+        <deployment name="genPlantillasDocumentos-core-1.3.0.jar" runtime-name="genPlantillasDocumentos-core.jar">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/bin/../standalone/deployments/genPlantillasDocumentos-core-1.3.0.jar"/>
+        </deployment>
+        <deployment name="genMensajes-app-1.1.ear" runtime-name="genMensajes-app.ear">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/bin/../standalone/deployments/genMensajes-app-1.1.ear"/>
+        </deployment>
+        <deployment name="vector-fiscal-1.0.0.jar" runtime-name="vector-fiscal.jar">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/bin/../standalone/deployments/vector-fiscal-1.0.0.jar"/>
+        </deployment>
+        <deployment name="acuerdos-ejb3-jee6-2.0.0.jar" runtime-name="acuerdos.jar">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/bin/../standalone/deployments/acuerdos-ejb3-jee6-2.0.0.jar"/>
+        </deployment>
+        <deployment name="comprobantes-electronicos-core-ear-6.5.ear" runtime-name="comprobantes-electronicos-core-ear.ear">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/bin/../standalone/deployments/comprobantes-electronicos-core-ear-6.5.ear"/>
+        </deployment>
+        <deployment name="_gdcdocumento-3.4.0.jar" runtime-name="_gdcdocumento.jar">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/bin/../standalone/deployments/_gdcdocumento-3.4.0.jar"/>
+        </deployment>
+        <deployment name="genParametroAmbiente-1.1.3-jee6.jar" runtime-name="genParametroAmbiente.jar">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/bin/../standalone/deployments/genParametroAmbiente-1.1.3-jee6.jar"/>
+        </deployment>
+        <deployment name="registro-civil-info-1.5.0.jar" runtime-name="registro-civil-info.jar">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/bin/../standalone/deployments/registro-civil-info-1.5.0.jar"/>
+        </deployment>
+        <deployment name="genGruposTrabajo-app-2.2.0.ear" runtime-name="genGruposTrabajo-app.ear">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/bin/../standalone/deployments/genGruposTrabajo-app-2.2.0.ear"/>
+        </deployment>
+        <deployment name="adm-5.3.0.jar" runtime-name="adm.jar">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/bin/../standalone/deployments/adm-5.3.0.jar"/>
+        </deployment>
+        <deployment name="ruc-3.5.jar" runtime-name="ruc.jar">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/bin/../standalone/deployments/ruc-3.5.jar"/>
+        </deployment>
+        <deployment name="persona-1.2.jar" runtime-name="persona.jar">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/bin/../standalone/deployments/persona-1.2.jar"/>
+        </deployment>
+        <deployment name="admin-web-3.0-jee6.jar" runtime-name="admin-web.jar">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/standalone/deployments/admin-web-3.0-jee6.jar"/>
+        </deployment>
+        <deployment name="ice-alcohol-internet-2.0.ear" runtime-name="ice-alcohol-internet.ear">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/standalone/deployments/ice-alcohol-internet-2.0.ear"/>
+        </deployment>
+        <deployment name="genNumeracionExtraWorkflow-5.0.0-Internet.jar" runtime-name="genNumeracionExtraWorkflow.jar">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/standalone/deployments/genNumeracionExtraWorkflow-5.0.0-Internet.jar"/>
+        </deployment>
+        <deployment name="notificaciones-buzon-servicio-2.0-jee6.jar" runtime-name="notificaciones-buzon.jar">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/standalone/deployments/notificaciones-buzon-servicio-2.0-jee6.jar"/>
+        </deployment>
+        <deployment name="gestionDocumentos-core-3.4.0.jar" runtime-name="gestionDocumentos-core.jar">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/standalone/deployments/gestionDocumentos-core-3.4.0.jar"/>
+        </deployment>
+        <deployment name="gestion-documentos-internet-3.9.ear" runtime-name="gestion-documentos.ear">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/standalone/deployments/gestion-documentos-internet-3.9.ear"/>
+        </deployment>
+        <deployment name="anexo-gastos-personales-2.6.war" runtime-name="anexo-gastos-personales.war">
+            <fs-archive path="/home/jboss/jboss-eap-6.2CP4-inst3/standalone/deployments/anexo-gastos-personales-2.6.war"/>
+        </deployment>
+    </deployments>
+</server>
